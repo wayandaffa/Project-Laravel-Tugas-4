@@ -9,13 +9,19 @@ class Mahasiswa extends Model
 {
     use HasFactory;
 
-    // Nama tabel
-    protected $table = 'mahasiswa';
+    // Tambahkan ini jika nama tabel di database adalah "mahasiswa"
+    protected $table = 'mahasiswas';
 
-    // Field yang boleh diisi
+    // Kolom yang boleh diisi (mass assignment)
     protected $fillable = [
         'nim',
         'nama',
-        'prodi',
+        'prodi_id',
     ];
+
+    // Relasi ke tabel prodi (many-to-one)
+    public function prodi()
+    {
+        return $this->belongsTo(Prodi::class);
+    }
 }

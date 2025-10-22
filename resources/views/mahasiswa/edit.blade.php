@@ -1,28 +1,33 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Edit Mahasiswa</title>
-</head>
-<body>
-  <h1>Edit Mahasiswa</h1>
+@extends('layouts.app')
+@section('content')
 
-  <!-- Gunakan method PUT -->
-  <form action="{{ route('mahasiswa.update', $m->id) }}" method="POST">
+<h1>Edit Mahasiswa</h1>
+
+<form action="{{ route('mahasiswa.update', $mahasiswa->id) }}" method="POST">
     @csrf
-    @method('PUT')  <!-- INI PENTING agar Laravel tahu ini request PUT -->
+    @method('PUT')
 
     <label>NIM:</label><br>
-    <input type="text" name="nim" value="{{ old('nim', $m->nim) }}"><br>
+    <input type="text" name="nim" value="{{ old('nim', $mahasiswa->nim) }}"><br><br>
 
     <label>Nama:</label><br>
-    <input type="text" name="nama" value="{{ old('nama', $m->nama) }}"><br>
+    <input type="text" name="nama" value="{{ old('nama', $mahasiswa->nama) }}"><br><br>
 
-    <label>Prodi:</label><br>
-    <input type="text" name="prodi" value="{{ old('prodi', $m->prodi) }}"><br><br>
+    <label>Program Studi:</label><br>
+    <select name="prodi_id">
+        <option value="">-- Pilih Prodi --</option>
+        @foreach($prodi as $p)
+            <option value="{{ $p->id }}" {{ $mahasiswa->prodi_id == $p->id ? 'selected' : '' }}>
+                {{ $p->nama_prodi }}
+            </option>
+        @endforeach
+    </select>
+    <br><br>
 
     <button type="submit">Update</button>
-  </form>
+</form>
 
-  <a href="{{ route('mahasiswa.index') }}">Kembali</a>
-</body>
-</html>
+<br>
+<a href="{{ route('mahasiswa.index') }}">Kembali</a>
+
+@endsection

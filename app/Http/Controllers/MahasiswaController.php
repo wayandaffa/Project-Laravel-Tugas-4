@@ -3,60 +3,83 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mahasiswa;
+use App\Models\Prodi;
+use App\Models\Fakultas;
 use Illuminate\Http\Request;
 
 class MahasiswaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $mahasiswa = Mahasiswa::all();
-        return view('mahasiswa.index', compact('mahasiswa'));
+        $fakultas = Fakultas::all();
+        $prodi = Prodi::all();
+
+        $query = Mahasiswa::with(['prodi.fakultas']);
+
+        if ($request->filled('fakultas_id')) {
+            $query->whereHas('prodi.fakultas', function ($q) use ($request) {
+                $q->where('id', $request->fakultas_id);
+            });
+        }
+
+        if ($request->filled('prodi_id')) {
+            $query->where('prodi_id', $request->prodi_id);
+        }
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('nama', 'like', '%' . $request->search . '%')
+                  ->orWhere('nim', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $mahasiswa = $query->paginate(10);
+        return view('mahasiswa.index', compact('mahasiswa', 'fakultas', 'prodi'));
     }
 
     public function create()
     {
-        return view('mahasiswa.create');
+        $prodi = Prodi::with('fakultas')->get();
+        return view('mahasiswa.create', compact('prodi'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'nim' => 'required|min:4|unique:mahasiswa,nim',
+            'nim' => 'required|min:4|unique:mahasiswas,nim',
             'nama' => 'required',
-            'prodi' => 'required',
+            'prodi_id' => 'required|exists:prodis,id',
         ]);
 
-        Mahasiswa::create($request->only(['nim', 'nama', 'prodi']));
+        Mahasiswa::create($request->all());
 
         return redirect()->route('mahasiswa.index')
                          ->with('success', 'Mahasiswa berhasil ditambahkan.');
     }
 
-    public function edit($id)
+    public function edit(Mahasiswa $mahasiswa)
     {
-        $m = Mahasiswa::findOrFail($id);
-        return view('mahasiswa.edit', compact('m'));
+        $prodi = Prodi::all();
+        return view('mahasiswa.edit', compact('mahasiswa', 'prodi'));
     }
 
-   public function update(Request $request, $id)
-{
-    $request->validate([
-        'nim' => 'required|min:4|unique:mahasiswa,nim,' . $id,
-        'nama' => 'required',
-        'prodi' => 'required',
-    ]);
-
-    $m = Mahasiswa::findOrFail($id);
-    $m->update($request->only(['nim','nama','prodi']));
-
-    return redirect()->route('mahasiswa.index')->with('success','Data mahasiswa berhasil diperbarui.');
-}
-
-
-    public function destroy($id)
+    public function update(Request $request, Mahasiswa $mahasiswa)
     {
-        $mhs = Mahasiswa::findOrFail($id);
-        $mhs->delete();
+        $request->validate([
+            'nim' => 'required|min:4|unique:mahasiswas,nim,' . $mahasiswa->id,
+            'nama' => 'required',
+            'prodi_id' => 'required|exists:prodis,id',
+        ]);
+
+        $mahasiswa->update($request->all());
+
+        return redirect()->route('mahasiswa.index')
+                         ->with('success', 'Data mahasiswa berhasil diperbarui.');
+    }
+
+    public function destroy(Mahasiswa $mahasiswa)
+    {
+        $mahasiswa->delete();
 
         return redirect()->route('mahasiswa.index')
                          ->with('success', 'Mahasiswa berhasil dihapus.');
